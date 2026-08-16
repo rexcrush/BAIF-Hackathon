@@ -1,0 +1,2 @@
+# This .gitkeep file ensures the outputs/ directory is tracked by git
+# while the actual generated files are ignored (see .gitignore)

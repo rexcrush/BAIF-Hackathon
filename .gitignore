@@ -1,0 +1,170 @@
+# ============================================================================
+# Python & Virtual Environments
+# ============================================================================
+venv/
+env/
+ENV/
+.venv/
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# ============================================================================
+# Jupyter Notebooks
+# ============================================================================
+.ipynb_checkpoints/
+*.ipynb
+.jupyter/
+
+# ============================================================================
+# IDE & Editor Configuration
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# ============================================================================
+# ML Model Caches (LARGE FILES - DO NOT COMMIT)
+# ============================================================================
+# HuggingFace Transformers models
+~/.cache/huggingface/
+.cache/huggingface/
+huggingface_cache/
+
+# PyTorch models
+~/.cache/torch/
+.cache/torch/
+torch_cache/
+
+# Faster-Whisper models
+~/.cache/faster_whisper/
+.cache/faster_whisper/
+faster_whisper_cache/
+
+# ============================================================================
+# Project-Specific: Media & Processing Files (TEMPORARY)
+# ============================================================================
+# Uploaded files (input media)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Generated output files (translated videos, audio, subtitles)
+backend/outputs/*
+!backend/outputs/.gitkeep
+
+# Temporary model cache
+backend/models/*
+!backend/models/.gitkeep
+
+# ============================================================================
+# Environment & Credentials (SECURITY)
+# ============================================================================
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+credentials.json
+config.json
+secrets.json
+
+# ============================================================================
+# API Keys & Tokens (from test.txt example - DO NOT COMMIT)
+# ============================================================================
+# Hugging Face tokens
+hf_token*
+HF_TOKEN*
+
+# ============================================================================
+# Testing & Coverage
+# ============================================================================
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# ============================================================================
+# Logging
+# ============================================================================
+*.log
+logs/
+
+# ============================================================================
+# OS-Specific Files
+# ============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ============================================================================
+# macOS
+# ============================================================================
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+
+# ============================================================================
+# Windows
+# ============================================================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ============================================================================
+# Docker (if added later)
+# ============================================================================
+.docker/
+.dockerignore
+
+# ============================================================================
+# Project-Specific: Temporary Debug Files
+# ============================================================================
+test_*.wav
+test_*.mp4
+test_*.srt
+debug/
+temp/
+tmp/
+
+# ============================================================================
+# Visual Studio Code Workspace Settings (Keep settings.json but not workspace)
+# ============================================================================
+*.code-workspace
+
+# ============================================================================
+# Pip Files
+# ============================================================================
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ============================================================================
+# Misc
+# ============================================================================
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
