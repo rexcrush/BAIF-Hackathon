@@ -9,6 +9,8 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List
 
@@ -17,6 +19,7 @@ from core.av_utils import extract_audio, burn_subtitles_into_video, mux_audio_in
 from core.dubbing import build_dubbed_track
 from core.asr import transcribe
 from core.subtitles import save_srt
+from core.tts import synthesize
 
 # Map our app's language names to Whisper's ISO codes, so the user's
 # selected source language can be passed as a hint instead of relying
@@ -27,12 +30,30 @@ WHISPER_LANG_HINTS = {
     "marathi": "mr",
 }
 
-app = FastAPI(title="NGO Translator - Backend")
+CODE_TO_LANG = {
+    "en": "english",
+    "hi": "hindi",
+    "mr": "marathi",
+}
+
+app = FastAPI(title="Sanskriti Sync - Backend")
+
+# Enable CORS for frontend clients
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 UPLOAD_DIR = Path("uploads")
 OUTPUT_DIR = Path("outputs")
 UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
+
+# Mount outputs directory so browser audio/video players can stream files directly
+app.mount("/media", StaticFiles(directory="outputs"), name="media")
 
 
 class TranslateRequest(BaseModel):
@@ -129,12 +150,15 @@ async def upload_file(file: UploadFile = File(...), source_language: str = Form(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Transcription failed: {e}")
 
+    detected_code = transcript.get("language", "hi")
+    detected_full_name = CODE_TO_LANG.get(detected_code, detected_code)
+
     return {
         "job_id": job_id,
         "original_filename": file.filename,
         "extracted_audio_path": str(extracted_audio_path),
-        "detected_language": transcript["language"],
-        "language_confidence": transcript["language_probability"],
+        "detected_language": detected_full_name,
+        "language_confidence": transcript.get("language_probability", 1.0),
         "segments": transcript["segments"],
     }
 
@@ -178,6 +202,31 @@ def translate_segments(req: TranslateSegmentsRequest):
         "target_lang": req.target_lang,
         "segments": translated_segments,
         "srt_filename": srt_filename,
+    }
+
+
+class SaveSrtRequest(BaseModel):
+    job_id: str
+    target_lang: str
+    segments: List[SegmentIn]
+
+
+@app.post("/save-srt")
+def save_custom_srt(req: SaveSrtRequest):
+    """
+    Saves an updated/edited SRT file from user-reviewed translated segments.
+    """
+    srt_ready_segments = [
+        {"start": s.start, "end": s.end, "text": s.text}
+        for s in req.segments
+    ]
+    srt_filename = f"{req.job_id}_{req.target_lang.lower()}.srt"
+    srt_path = OUTPUT_DIR / srt_filename
+    save_srt(srt_ready_segments, str(srt_path))
+    return {
+        "job_id": req.job_id,
+        "srt_filename": srt_filename,
+        "message": "SRT updated successfully"
     }
 
 
@@ -271,4 +320,39 @@ def dub_video(req: DubVideoRequest):
     return {
         "job_id": req.job_id,
         "dubbed_video_filename": output_filename,
+    }
+
+
+class TTSPreviewRequest(BaseModel):
+    text: str
+    language: str
+
+
+@app.post("/tts-preview")
+def tts_preview(req: TTSPreviewRequest):
+    """
+    Synthesizes short text preview using MMS-TTS and returns the audio URL.
+    """
+    clean_text = req.text.strip()
+    if not clean_text:
+        raise HTTPException(status_code=400, detail="Cannot synthesize empty text")
+
+    lang = req.language.lower()
+    if lang not in LANG_CODES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language: {req.language}")
+
+    import hashlib
+    text_hash = hashlib.md5(f"{lang}_{clean_text}".encode("utf-8")).hexdigest()[:12]
+    preview_filename = f"preview_{text_hash}.wav"
+    preview_path = OUTPUT_DIR / preview_filename
+
+    if not preview_path.exists():
+        try:
+            synthesize(clean_text, lang, str(preview_path))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"TTS synthesis failed: {e}")
+
+    return {
+        "audio_filename": preview_filename,
+        "audio_url": f"/media/{preview_filename}",
     }
